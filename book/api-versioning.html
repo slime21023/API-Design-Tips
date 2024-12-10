@@ -1,0 +1,433 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>API Versioning - API Design Tips</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="cheat-sheet.html"><strong aria-hidden="true">1.</strong> Cheat Sheet</a></li><li class="chapter-item expanded "><a href="naming-conventions.html"><strong aria-hidden="true">2.</strong> Naming Conventions</a></li><li class="chapter-item expanded "><a href="filtering-and-pagination.html"><strong aria-hidden="true">3.</strong> Filtering & Pagination</a></li><li class="chapter-item expanded "><a href="api-versioning.html" class="active"><strong aria-hidden="true">4.</strong> API Versioning</a></li><li class="chapter-item expanded "><a href="error-handling.html"><strong aria-hidden="true">5.</strong> Error Handling</a></li><li class="chapter-item expanded "><a href="security-measures.html"><strong aria-hidden="true">6.</strong> Security Measures</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">API Design Tips</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="api-versioning"><a class="header" href="#api-versioning">API Versioning</a></h1>
+<p>API versioning is the practice of managing changes to an API over time. It allows developers to introduce new features or modify existing functionality without disrupting existing clients. Proper versioning ensures stability, backward compatibility, and a smooth transition to updated APIs.</p>
+<h3 id="why-api-versioning-matters"><a class="header" href="#why-api-versioning-matters">Why API Versioning Matters</a></h3>
+<ol>
+<li><strong>Backward Compatibility</strong>: Ensure existing clients can continue to use the API without breaking their implementations.</li>
+<li><strong>Controlled Changes</strong>: Enable developers to introduce new features, deprecate old ones, or fix issues without immediate impact.</li>
+<li><strong>Flexibility</strong>: Allow consumers to adopt updates at their own pace.</li>
+<li><strong>Transparency</strong>: Clearly communicate changes and versions to API consumers.</li>
+</ol>
+<h3 id="versioning-strategies"><a class="header" href="#versioning-strategies">Versioning Strategies</a></h3>
+<ol>
+<li><strong>URL-Based Versioning</strong>: 
+<ul>
+<li>Include version in the URL</li>
+<li><code>/v1/resources</code></li>
+<li>Pros:
+<ul>
+<li>Easy to understand and implement.</li>
+<li>Explicit versioning in the API path.</li>
+</ul>
+</li>
+<li>Cons:
+<ul>
+<li>URL structure changes with each version.</li>
+<li>Not ideal for fine-grained versioning of resources or methods.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Header-Based Versioning</strong>:
+<ul>
+<li>Description: The version is specified in HTTP headers.</li>
+<li>
+<pre><code class="language-json">  GET /users
+  Accept: application/vnd.api+json;version=2
+</code></pre>
+</li>
+<li>Pros:
+<ul>
+<li>Cleaner URLs without version clutter.</li>
+<li>Supports fine-grained versioning (e.g., resource-level versions).</li>
+</ul>
+</li>
+<li>Cons:
+<ul>
+<li>Requires consumers to configure headers explicity.</li>
+<li>Less discoverable compared to URL-based versioning.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Query Parameter Versioning</strong>
+<ul>
+<li>Description: The version is passed as a query parameter.</li>
+<li><code>GET /users?version=2</code></li>
+<li>Pros:
+<ul>
+<li>Easy to implement.</li>
+<li>Compatible with dynamic routing systems.</li>
+</ul>
+</li>
+<li>Cons:
+<ul>
+<li>Adds complexity to the query string.</li>
+<li>Can make debugging more challenging.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Content-Based Versioning</strong>
+<ul>
+<li>Description: The version is embedded in the request body.</li>
+<li>
+<pre><code class="language-json">{
+  &quot;version&quot;: &quot;2&quot;,
+  &quot;data&quot;: { &quot;id&quot;: 123, &quot;name&quot;: &quot;John&quot; }
+}
+</code></pre>
+</li>
+<li>Pros:
+<ul>
+<li>Flexible for APIs with non-HTTP transport layers.</li>
+</ul>
+</li>
+<li>Cons:
+<ul>
+<li>Versioning logic is tightly coupled to the payload.</li>
+<li>Harder to implement and enforce consistently.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Semantic Versioning</strong>
+<ul>
+<li>Description: Versions are expressed as <code>MAJOR.MINOR.PATCH</code>.</li>
+<li>Example:
+<ul>
+<li><code>GET /users</code> (Header: <code>X-API-Version: 1.2.3</code>)</li>
+</ul>
+</li>
+<li>Pros:
+<ul>
+<li>Provides detailed information about backward compatibility.</li>
+<li>Allows non-breaking changes in minor/patch updates.</li>
+</ul>
+</li>
+<li>Cons:
+<ul>
+<li>Requires clear documentation to differentiate breaking vs. non-breaking changes.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h3>
+<ol>
+<li>Start with Version 1
+<ul>
+<li>Use <code>v1</code> as the starting point, even if it's the first release.</li>
+</ul>
+</li>
+<li>Maintain Backward Compatibility
+<ul>
+<li>Avoid breaking changes within the same version.</li>
+<li>Introduce breaking changes only in major versions (e.g., <code>v2</code>).</li>
+</ul>
+</li>
+<li>Deprecate Old Versions Gracefully
+<ul>
+<li>Announce deprecations well in advance.</li>
+<li>Provide clear timelines for decommissioning old versions.</li>
+</ul>
+</li>
+<li>Document All Versions
+<ul>
+<li>Clearly document what each version supports and any differences between versions.</li>
+</ul>
+</li>
+<li>Use Clear and Predictable Semantics
+<ul>
+<li>Follow conventions that are easy for consumers to understand and adopt.</li>
+</ul>
+</li>
+<li>Communicate Changes Transparently
+<ul>
+<li>Provide changelogs or migration guides to help consumers transition between versions.</li>
+</ul>
+</li>
+</ol>
+<h3 id="when-to-introduce-a-new-version"><a class="header" href="#when-to-introduce-a-new-version">When to introduce a New Version</a></h3>
+<ol>
+<li><strong>Breaking Changes</strong>: Modifying or removing existing functionality.
+<ul>
+<li>Example: Renaming fields, removing endpoints.</li>
+</ul>
+</li>
+<li><strong>Significant New Features</strong>:  Introducing major new capabilities.
+<ul>
+<li>Example: Adding support for a new data format.</li>
+</ul>
+</li>
+<li><strong>Incompatible Enhancements</strong>: Changes that cannot coexist with older versions.
+<ul>
+<li>Example: Changing authentication mechanisms.</li>
+</ul>
+</li>
+</ol>
+<h3 id="common-pitfalls"><a class="header" href="#common-pitfalls">Common Pitfalls</a></h3>
+<ol>
+<li>Skipping Versioning Initially
+<ul>
+<li>Adding versioning later can lead to inconsistencies and technical debt.</li>
+</ul>
+</li>
+<li>Overloading Versions with Breaking Changes
+<ul>
+<li>Avoid introducing multiple breaking changes in a single update.</li>
+</ul>
+</li>
+<li>Unclear Deprecation Timelines
+<ul>
+<li>Consumers may not migrate if deprecations are not clearly communicated.</li>
+</ul>
+</li>
+<li>Lack of Migration Support
+<ul>
+<li>Provide tools or documentation to help clients transition between versions.</li>
+</ul>
+</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="filtering-and-pagination.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="error-handling.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="filtering-and-pagination.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="error-handling.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
